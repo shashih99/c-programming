@@ -1,0 +1,43 @@
+# VS Code settings
+.vscode/
+
+# Build directories
+build/
+**/build/
+**/Debug/
+**/Release/
+
+# Compiled files
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dylib
+
+# Debug files
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# Executables
+outDebug
+a.out
+
+# Editor backup files
+*~
+*.swp
+*.swo
+.DS_Store
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+
+# Temporary files
+*.tmp
+*.log
+
