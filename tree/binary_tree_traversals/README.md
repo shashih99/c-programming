@@ -78,3 +78,38 @@ make clean
 ```bash
 make rebuild
 ```
+
+### Debug Build
+```bash
+make debug
+```
+
+This creates a debug build with:
+- Debugging symbols (`-g`)
+- No optimization (`-O0`) for easier debugging
+- Debug flag (`-DDEBUG`) if needed
+
+### Run Debug Build
+```bash
+make debug-run
+```
+
+### Debug with GDB
+```bash
+make debug
+gdb build/Debug/binary_tree_traversals
+```
+
+In GDB, you can:
+- Set breakpoints: `break inorderTraversal` or `break binary_tree_traversals.c:65`
+- Run: `run`
+- Step through: `next` or `step`
+- Print variables: `print root->val` or `print *returnSize`
+- Continue: `continue`
+- Quit: `quit`
+
+### Debug in VS Code / Cursor
+1. Open `tree/binary_tree_traversals/binary_tree_traversals.c`
+2. Set breakpoints where needed
+3. Press `F5` or open **Run and Debug**
+4. Select **Debug binary_tree_traversals**
