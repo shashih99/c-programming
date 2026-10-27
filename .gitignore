@@ -1,5 +1,10 @@
-# VS Code settings
-.vscode/
+# VS Code — keep shared debug config; ignore local/editor noise
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
+!.vscode/c_cpp_properties.json
+.vscode/build/
 
 # Build directories
 build/
