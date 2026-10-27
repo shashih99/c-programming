@@ -1,0 +1,164 @@
+---
+description: Template for adding a new C programming problem (folder, .c, README, Makefile, debug current file)
+alwaysApply: true
+---
+
+# Add New C Program
+
+When the user asks to add a new programme / problem, follow this checklist every time.
+
+## Checklist (complete in this order)
+
+1. Create folder `<category>/<snake_case_name>/`
+2. Add `<snake_case_name>.c`
+3. Add `README.md`
+4. Add `Makefile` with `debug` → `build/Debug/<snake_case_name>`
+5. Ensure workspace has **Debug current program** in `.vscode/launch.json` + matching task (see §5)
+6. Update root `README.md`
+
+Do **not** add a new per-program launch entry for every problem. Debug uses the **currently open `.c` file**.
+
+## How debug works
+
+1. Open the problem `.c` file (e.g. `minimum_depth_of_binary_tree.c`)
+2. Select **Debug current program** in Run and Debug
+3. Press F5 — `preLaunchTask` runs `make debug` in `${fileDirname}`, then gdb launches:
+
+   `${fileDirname}/build/Debug/${fileBasenameNoExtension}`
+
+So if `tree/minimum_depth_of_binary_tree/minimum_depth_of_binary_tree.c` is open, it builds and debugs `tree/minimum_depth_of_binary_tree/build/Debug/minimum_depth_of_binary_tree`.
+
+## 1. Create the folder
+
+Path: `<category>/<snake_case_name>/`
+
+Categories: `array/`, `linked_list/`, `tree/`, `stack/`, `binary_search/`, `dynamic_programming/`, `string/`, `math/`
+
+## 2. Add the `.c` file
+
+- Filename matches folder: `<snake_case_name>.c`
+- Include solution + `main()` with example test cases
+- Prefer C11 style consistent with existing problems
+
+## 3. Add `README.md`
+
+Include: problem description, examples, constraints, approach + complexity, build/run/debug.
+
+Debug section must say:
+
+1. Open `<snake_case_name>.c`
+2. Select **Debug current program**
+3. Press F5
+
+## 4. Add `Makefile`
+
+`TARGET` / `.c` basename **must match** so `${fileBasenameNoExtension}` finds the binary:
+
+```makefile
+CC = gcc
+CFLAGS = -Wall -Wextra -std=c11 -O2
+DEBUG_CFLAGS = -Wall -Wextra -std=c11 -g -O0 -DDEBUG
+LDFLAGS =
+
+TARGET = <snake_case_name>
+SRC = <snake_case_name>.c
+OBJ = $(SRC:.c=.o)
+DEBUG_TARGET = build/Debug/$(TARGET)
+
+all: $(TARGET)
+
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ) $(LDFLAGS)
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJ) $(TARGET)
+	rm -rf build
+
+rebuild: clean all
+
+run: $(TARGET)
+	./$(TARGET)
+
+debug: $(DEBUG_TARGET)
+
+$(DEBUG_TARGET): $(SRC)
+	@mkdir -p build/Debug
+	$(CC) $(DEBUG_CFLAGS) -o $(DEBUG_TARGET) $(SRC)
+
+debug-run: $(DEBUG_TARGET)
+	./$(DEBUG_TARGET)
+
+.PHONY: all clean rebuild run debug debug-run
+```
+
+## 5. REQUIRED once — Debug current open file
+
+If missing from the workspace, add these. Do **not** duplicate per new program.
+
+### `.vscode/tasks.json`
+
+```json
+{
+  "label": "Build current program (debug)",
+  "type": "shell",
+  "command": "make",
+  "args": ["debug"],
+  "options": {
+    "cwd": "${fileDirname}",
+    "env": {}
+  },
+  "group": {
+    "kind": "build",
+    "isDefault": true
+  },
+  "problemMatcher": ["$gcc"],
+  "presentation": {
+    "reveal": "silent",
+    "panel": "shared"
+  }
+}
+```
+
+### `.vscode/launch.json`
+
+Put this **first** in `configurations`:
+
+```json
+{
+  "name": "Debug current program",
+  "type": "cppdbg",
+  "request": "launch",
+  "program": "${fileDirname}/build/Debug/${fileBasenameNoExtension}",
+  "args": [],
+  "cwd": "${fileDirname}",
+  "preLaunchTask": "Build current program (debug)",
+  "MIMode": "gdb",
+  "miDebuggerPath": "gdb",
+  "stopAtEntry": false,
+  "externalConsole": false,
+  "setupCommands": [
+    {
+      "description": "Enable pretty-printing for gdb",
+      "text": "-enable-pretty-printing",
+      "ignoreFailures": true
+    }
+  ]
+}
+```
+
+## 6. Update root `README.md`
+
+Add the new problem under the correct category in the Structure table.
+
+## Verification before finishing
+
+- [ ] `<category>/<snake_case_name>/<snake_case_name>.c`
+- [ ] `<category>/<snake_case_name>/README.md`
+- [ ] Makefile `debug` writes `build/Debug/<snake_case_name>`
+- [ ] `.vscode` has **Debug current program** + **Build current program (debug)**
+- [ ] Root `README.md` lists the problem
+
+Never rely on `C/C++ Runner: Debug Session`. Prefer **Debug current program** over adding one launch entry per problem.
