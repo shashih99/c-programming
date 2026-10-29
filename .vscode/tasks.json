@@ -4,8 +4,7 @@
     {
       "label": "Build current program (debug)",
       "type": "shell",
-      "command": "make",
-      "args": ["debug"],
+      "command": "if make -n debug >/dev/null 2>&1; then make debug; else mkdir -p build/Debug && gcc -Wall -Wextra -std=c11 -g -O0 -o \"build/Debug/${fileBasenameNoExtension}\" \"${file}\"; fi",
       "options": {
         "cwd": "${fileDirname}",
         "env": {}

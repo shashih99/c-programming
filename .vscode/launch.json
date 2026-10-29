@@ -8,11 +8,17 @@
       "program": "${fileDirname}/build/Debug/${fileBasenameNoExtension}",
       "args": [],
       "cwd": "${fileDirname}",
-      "preLaunchTask": "Build current program (debug)",
+      "preLaunchTask": "${defaultBuildTask}",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "stopAtEntry": false,
       "externalConsole": false,
+      "internalConsoleOptions": "openOnSessionStart",
+      "presentation": {
+        "hidden": false,
+        "group": "1_default",
+        "order": 1
+      },
       "setupCommands": [
         {
           "description": "Enable pretty-printing for gdb",

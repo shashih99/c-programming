@@ -23,3 +23,15 @@ From any problem directory:
 make
 make run
 ```
+
+## Debug (F5)
+
+Debugging always uses the **currently open `.c` file** — no per-problem launch config needed.
+
+1. Open the problem `.c` file (e.g. `array/pascal_triangle_ii/pascal_triangle_ii.c`)
+2. In **Run and Debug**, select **Debug current program** (default)
+3. Press `F5`
+
+That runs `make debug` in the file’s folder, then starts gdb on:
+
+`${fileDirname}/build/Debug/${fileBasenameNoExtension}`
