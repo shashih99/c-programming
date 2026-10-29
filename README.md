@@ -6,7 +6,7 @@ C programming exercises organized by concept. Each folder contains self-containe
 
 | Folder | Concept | Problems |
 |--------|---------|----------|
-| [array/](array/) | Array manipulation, two pointers | `merge_sorted_array`, `remove_element`, `remove_duplicate_arr`, `two_sum`, `plus_one`, `pascal_triangle` |
+| [array/](array/) | Array manipulation, two pointers | `merge_sorted_array`, `remove_element`, `remove_duplicate_arr`, `two_sum`, `plus_one`, `pascal_triangle`, `pascal_triangle_ii` |
 | [linked_list/](linked_list/) | Singly linked lists | `merge_two_sorted_lists`, `remove_duplicates_sorted_list` |
 | [tree/](tree/) | Binary trees | `binary_tree_traversals`, `same_tree`, `minimum_depth_of_binary_tree`, `path_sum` |
 | [stack/](stack/) | Stack | `valid_parentheses` |
