@@ -24,6 +24,21 @@
           "description": "Enable pretty-printing for gdb",
           "text": "-enable-pretty-printing",
           "ignoreFailures": true
+        },
+        {
+          "description": "Don't step into glibc (libc6-dbg has line info but no sources, e.g. ./libio/libioP.h)",
+          "text": "-interpreter-exec console \"skip -gfi ./*\"",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Don't step into glibc (nested source dirs)",
+          "text": "-interpreter-exec console \"skip -gfi ./*/*\"",
+          "ignoreFailures": true
+        },
+        {
+          "description": "Don't step into glibc (deeper source dirs)",
+          "text": "-interpreter-exec console \"skip -gfi ./*/*/*\"",
+          "ignoreFailures": true
         }
       ]
     }
