@@ -9,7 +9,7 @@ Concise notes with runnable examples, following the
 |---|---------|--------|
 | 01 | [Basics](01-basics.md) — intro, compilation, identifiers, keywords, I/O, variables, data types, operators, conditionals, loops | ✅ |
 | 02 | [Functions](02-functions.md) — prototypes, parameter passing, `main`, recursion, inline, nested | ✅ |
-| 03 | Arrays and Strings | ⏳ |
+| 03 | [Arrays and Strings](03-arrays-and-strings.md) — 1-D/2-D arrays, decay, strings, `<string.h>` | ✅ |
 | 04 | Pointers | ⏳ |
 | 05 | User Defined Data Types — struct, padding, union, enum, bit fields | ⏳ |
 | 06 | Memory Management — layout, malloc/free, leaks | ⏳ |
