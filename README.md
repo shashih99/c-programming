@@ -14,6 +14,7 @@ C programming exercises organized by concept. Each folder contains self-containe
 | [dynamic_programming/](dynamic_programming/) | Dynamic programming | `climbing_stairs` |
 | [string/](string/) | String processing | `add_binary`, `longest_common_prefix`, `length_of_last_word`, `find_first_occurrence`, `roman_to_integer`, `valid_palindrome` |
 | [math/](math/) | Number / math | `palindrom` |
+| [bit_manipulation/](bit_manipulation/) | Bit manipulation | `number_of_1_bits` |
 
 ## Build and run
 
