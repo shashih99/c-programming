@@ -14,7 +14,7 @@ Concise notes with runnable examples, following the
 | 05 | [User Defined Data Types](05-user-defined-types.md) — struct, padding, union, enum, bit fields, typedef | ✅ |
 | 06 | [Memory Management](06-memory-management.md) — layout, stack vs heap, malloc/calloc/realloc/free, leaks, sanitizers | ✅ |
 | 07 | [File Handling](07-file-handling.md) — fopen modes, text and binary I/O, structs, EOF/feof, fseek, remove/rename | ✅ |
-| 08 | Error Handling | ⏳ |
+| 08 | [Error Handling](08-error-handling.md) — errno/perror, goto cleanup, file errors, divide by zero, assert, setjmp | ✅ |
 | 09 | Preprocessor and Misc — macros, headers, time.h, linkage, storage classes | ⏳ |
 | 10 | Advanced — variadic, syscalls, signals, sockets, `_Generic`, threads | ⏳ |
 | 11 | What's Next — interview Qs, DSA, practice | ⏳ |
@@ -23,7 +23,7 @@ Concise notes with runnable examples, following the
 
 ```bash
 cd examples
-gcc -Wall -Wextra -std=c11 01_operators.c -o prog && ./prog
+gcc -Wall -Wextra -std=c11 01_operators.c -o prog -lm && ./prog   # -lm links the math library (needed by 08_*)
 ```
 
 Example files are named `NN_topic.c`, where `NN` is the section number.
