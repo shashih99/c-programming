@@ -8,7 +8,7 @@ Concise notes with runnable examples, following the
 | # | Section | Status |
 |---|---------|--------|
 | 01 | [Basics](01-basics.md) — intro, compilation, identifiers, keywords, I/O, variables, data types, operators, conditionals, loops | ✅ |
-| 02 | Functions — prototypes, parameter passing, `main`, recursion, inline, nested | ⏳ |
+| 02 | [Functions](02-functions.md) — prototypes, parameter passing, `main`, recursion, inline, nested | ✅ |
 | 03 | Arrays and Strings | ⏳ |
 | 04 | Pointers | ⏳ |
 | 05 | User Defined Data Types — struct, padding, union, enum, bit fields | ⏳ |
@@ -29,3 +29,5 @@ gcc -Wall -Wextra -std=c11 01_operators.c -o prog && ./prog
 Example files are named `NN_topic.c`, where `NN` is the section number.
 
 See [PLAN.md](PLAN.md) for the full outline.
+
+> `02_nested.c` uses a GCC-only extension: compile it with `-std=gnu11` instead of `-std=c11`.
