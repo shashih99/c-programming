@@ -13,7 +13,7 @@ Concise notes with runnable examples, following the
 | 04 | [Pointers](04-pointers.md) — basics, arithmetic, double pointers, function pointers, `const` | ✅ |
 | 05 | [User Defined Data Types](05-user-defined-types.md) — struct, padding, union, enum, bit fields, typedef | ✅ |
 | 06 | [Memory Management](06-memory-management.md) — layout, stack vs heap, malloc/calloc/realloc/free, leaks, sanitizers | ✅ |
-| 07 | File Handling | ⏳ |
+| 07 | [File Handling](07-file-handling.md) — fopen modes, text and binary I/O, structs, EOF/feof, fseek, remove/rename | ✅ |
 | 08 | Error Handling | ⏳ |
 | 09 | Preprocessor and Misc — macros, headers, time.h, linkage, storage classes | ⏳ |
 | 10 | Advanced — variadic, syscalls, signals, sockets, `_Generic`, threads | ⏳ |
