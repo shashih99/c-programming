@@ -12,7 +12,7 @@ Concise notes with runnable examples, following the
 | 03 | [Arrays and Strings](03-arrays-and-strings.md) — 1-D/2-D arrays, decay, strings, `<string.h>` | ✅ |
 | 04 | [Pointers](04-pointers.md) — basics, arithmetic, double pointers, function pointers, `const` | ✅ |
 | 05 | [User Defined Data Types](05-user-defined-types.md) — struct, padding, union, enum, bit fields, typedef | ✅ |
-| 06 | Memory Management — layout, malloc/free, leaks | ⏳ |
+| 06 | [Memory Management](06-memory-management.md) — layout, stack vs heap, malloc/calloc/realloc/free, leaks, sanitizers | ✅ |
 | 07 | File Handling | ⏳ |
 | 08 | Error Handling | ⏳ |
 | 09 | Preprocessor and Misc — macros, headers, time.h, linkage, storage classes | ⏳ |
