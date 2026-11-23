@@ -1,0 +1,501 @@
+<title>Missing Ranges Visualizer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: one column workbench — input bar, number line stage, then code + state side by side, transport pinned under the stage */
+:root {
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --ink: #18202c;
+  --muted: #5d6878;
+  --line: #d5dbe4;
+  --pending: #e3e8ef;
+  --present: #26324a;
+  --present-ink: #ffffff;
+  --accent: #2f5bd3;
+  --accent-soft: #dfe7fb;
+  --missing: #d9480f;
+  --missing-soft: #fde4d6;
+  --code-bg: #f6f8fb;
+  --code-hl: #fff1c2;
+  --font-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #11151c; --surface: #1a2029; --ink: #e6eaf0; --muted: #98a3b3; --line: #2e3744;
+    --pending: #262e3a; --present: #c9d3e3; --present-ink: #121821; --accent: #7c9cf5; --accent-soft: #24304d;
+    --missing: #ff8a4c; --missing-soft: #43261a; --code-bg: #151a22; --code-hl: #3b3417; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #11151c; --surface: #1a2029; --ink: #e6eaf0; --muted: #98a3b3; --line: #2e3744;
+  --pending: #262e3a; --present: #c9d3e3; --present-ink: #121821; --accent: #7c9cf5; --accent-soft: #24304d;
+  --missing: #ff8a4c; --missing-soft: #43261a; --code-bg: #151a22; --code-hl: #3b3417; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 24px 40px;
+}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+h1 { font-family: var(--font-display); font-size: 1.75rem; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+.lede { margin: 4px 0 0; color: var(--muted); max-width: 65ch; }
+.lede code, .narr code { font-family: var(--font-mono); font-size: 0.92em; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; margin: 0 0 10px; }
+
+/* input bar */
+form.inputs { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 0.78rem; color: var(--muted); font-weight: 500; }
+.field input, .field select {
+  font: 500 0.92rem var(--font-mono); color: var(--ink); background: var(--code-bg);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; min-width: 0;
+}
+.field.nums { flex: 1 1 220px; }
+.field.nums input { width: 100%; }
+.field.num input { width: 110px; }
+.field select { font-family: var(--font-body); }
+.err { color: var(--missing); font-size: 0.85rem; margin: 8px 0 0; min-height: 1.2em; }
+
+button {
+  font: 600 0.88rem var(--font-body); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 12px; cursor: pointer;
+}
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+button:disabled { opacity: 0.45; cursor: default; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* stage */
+.stage { display: grid; gap: 18px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.8rem; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid var(--line); }
+.sw.present { background: var(--present); border-color: var(--present); }
+.sw.missing { background: var(--missing); border-color: var(--missing); }
+.sw.cand { background: var(--missing-soft); border: 2px dashed var(--missing); }
+.sw.pending { background: var(--pending); }
+
+.line-grid { display: flex; flex-wrap: wrap; column-gap: 4px; row-gap: 26px; padding: 18px 2px 20px; }
+.cell {
+  position: relative; min-width: 30px; height: 30px; padding: 0 4px; border-radius: 5px;
+  display: grid; place-items: center; font: 500 0.74rem var(--font-mono); font-variant-numeric: tabular-nums;
+  background: var(--pending); color: var(--muted); border: 2px solid transparent;
+  transition: background-color .25s, color .25s, border-color .25s, transform .25s;
+}
+.cell.present { background: var(--present); color: var(--present-ink); }
+.cell.missing { background: var(--missing); color: var(--surface); }
+.cell.cand { background: var(--missing-soft); color: var(--missing); border: 2px dashed var(--missing); }
+.cell.flash { transform: translateY(-3px); }
+.cell.sentinel { background: transparent; border: 2px dashed var(--line); color: var(--muted); }
+.cell.is-cur { border-color: var(--accent); border-style: solid; }
+.cell.is-cur::before, .seg.is-cur::before {
+  content: "cur"; position: absolute; top: -19px; left: 50%; transform: translateX(-50%);
+  font: 600 0.64rem var(--font-mono); color: var(--accent);
+}
+.cell.is-next::after, .seg.is-next::after {
+  content: "next"; position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+  font: 600 0.64rem var(--font-mono); color: var(--surface); background: var(--accent);
+  padding: 0 4px; border-radius: 3px; line-height: 15px;
+}
+
+/* compressed view for large ranges */
+.seg-row { display: flex; flex-wrap: wrap; align-items: center; column-gap: 6px; row-gap: 28px; padding: 18px 2px 22px; }
+.seg {
+  position: relative; height: 34px; padding: 0 10px; border-radius: 6px; display: grid; place-items: center;
+  font: 500 0.78rem var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap;
+  transition: background-color .25s, color .25s, border-color .25s;
+}
+.seg.node { background: var(--present); color: var(--present-ink); border: 2px solid transparent; }
+.seg.node.sentinel { background: transparent; color: var(--muted); border: 2px dashed var(--line); }
+.seg.node.is-cur { border-color: var(--accent); }
+.seg.gap { background: var(--pending); color: var(--muted); min-width: 90px; border: 2px solid transparent; }
+.seg.gap.cand { background: var(--missing-soft); color: var(--missing); border: 2px dashed var(--missing); }
+.seg.gap.missing { background: var(--missing); color: var(--surface); }
+.mode-note { font-size: 0.8rem; color: var(--muted); margin: 0; }
+
+/* nums array */
+.arr { display: flex; flex-wrap: wrap; gap: 6px; padding-bottom: 4px; }
+.slot { display: grid; justify-items: center; gap: 3px; }
+.slot .box {
+  min-width: 42px; height: 36px; padding: 0 6px; border-radius: 6px; display: grid; place-items: center;
+  font: 600 0.85rem var(--font-mono); background: var(--code-bg); border: 2px solid var(--line);
+  transition: border-color .2s, background-color .2s;
+}
+.slot.sentinel .box { border-style: dashed; color: var(--muted); font-weight: 500; }
+.slot.on .box { border-color: var(--accent); background: var(--accent-soft); }
+.slot .idx { font: 500 0.68rem var(--font-mono); color: var(--muted); }
+.slot.on .idx { color: var(--accent); font-weight: 600; }
+
+.narr {
+  margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--accent-soft); color: var(--ink);
+  font-size: 0.98rem; min-height: 3.1em;
+}
+
+/* transport */
+.transport { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.transport input[type="range"] { accent-color: var(--accent); }
+#scrub { flex: 1 1 200px; min-width: 0; }
+.stepcount { font: 500 0.8rem var(--font-mono); color: var(--muted); font-variant-numeric: tabular-nums; min-width: 7ch; text-align: right; }
+.speed { display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--muted); }
+#speed { width: 90px; }
+
+/* bottom: code + state */
+.duo { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 760px) { .duo { grid-template-columns: minmax(0, 1fr); } }
+.code { overflow-x: auto; background: var(--code-bg); border-radius: 8px; padding: 8px 0; }
+.code pre { margin: 0; font: 0.82rem/1.75 var(--font-mono); }
+.code .ln { display: block; padding: 0 14px 0 0; white-space: pre; transition: background-color .2s; }
+.code .ln .no { display: inline-block; width: 2.6em; text-align: right; padding-right: 1em; color: var(--muted); user-select: none; }
+.code .ln.hl { background: var(--code-hl); box-shadow: inset 3px 0 0 var(--accent); }
+
+.vars { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 16px; }
+.var { background: var(--code-bg); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+.var dt { font: 500 0.72rem var(--font-mono); color: var(--muted); }
+.var dd { margin: 0; font: 600 1.05rem var(--font-mono); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; transition: color .2s; }
+.var dd.changed { color: var(--accent); }
+.out { display: flex; flex-wrap: wrap; gap: 6px; min-height: 34px; align-items: center; font-family: var(--font-mono); }
+.chip {
+  font: 600 0.85rem var(--font-mono); padding: 5px 9px; border-radius: 6px;
+  background: var(--missing-soft); color: var(--missing); border: 1px solid var(--missing);
+}
+.chip.new { animation: pop .35s ease-out; }
+.empty { color: var(--muted); font-size: 0.88rem; }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@media (max-width: 480px) { .vars { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Missing Ranges</h1>
+    <p class="lede">LeetCode 163, step by step. One pass over <code>nums</code> with a pointer <code>next</code> (the smallest number not yet accounted for). Whenever <code>nums[i] &gt; next</code>, the numbers in between are missing. A sentinel <code>upper + 1</code> catches the gap at the end.</p>
+  </header>
+
+  <section class="panel" aria-label="Input">
+    <form class="inputs" id="form">
+      <div class="field">
+        <label for="preset">Example</label>
+        <select id="preset"></select>
+      </div>
+      <div class="field nums">
+        <label for="in-nums">nums (sorted, unique)</label>
+        <input id="in-nums" type="text" inputmode="numeric" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field num">
+        <label for="in-lower">lower</label>
+        <input id="in-lower" type="text" inputmode="numeric" autocomplete="off">
+      </div>
+      <div class="field num">
+        <label for="in-upper">upper</label>
+        <input id="in-upper" type="text" inputmode="numeric" autocomplete="off">
+      </div>
+      <button type="submit" class="primary" id="apply">Run</button>
+    </form>
+    <p class="err" id="err" role="alert"></p>
+  </section>
+
+  <section class="panel stage" aria-label="Animation">
+    <div>
+      <p class="label">Number line, lower to upper</p>
+      <div class="legend">
+        <span><i class="sw present"></i>in nums</span>
+        <span><i class="sw cand"></i>gap found</span>
+        <span><i class="sw missing"></i>added to result</span>
+        <span><i class="sw pending"></i>not visited yet</span>
+      </div>
+      <div id="viz"></div>
+      <p class="mode-note" id="mode-note"></p>
+    </div>
+    <div>
+      <p class="label">nums[i]</p>
+      <div class="arr" id="arr"></div>
+    </div>
+    <p class="narr" id="narr" aria-live="polite"></p>
+    <div class="transport">
+      <button type="button" id="b-reset" title="Back to start (Home)">⏮</button>
+      <button type="button" id="b-prev" title="Previous step (←)">◀ Step</button>
+      <button type="button" class="primary" id="b-play" title="Play / pause (Space)">Play</button>
+      <button type="button" id="b-next" title="Next step (→)">Step ▶</button>
+      <input type="range" id="scrub" min="0" max="0" value="0" aria-label="Timeline">
+      <span class="stepcount" id="count">0/0</span>
+      <label class="speed" for="speed">Speed <input type="range" id="speed" min="0.5" max="3" step="0.25" value="1"></label>
+    </div>
+  </section>
+
+  <div class="duo">
+    <section class="panel" aria-label="Code">
+      <p class="label">findMissingRanges (C)</p>
+      <div class="code"><pre id="code"></pre></div>
+    </section>
+    <section class="panel" aria-label="State">
+      <p class="label">Variables</p>
+      <dl class="vars">
+        <div class="var"><dt>i</dt><dd id="v-i">–</dd></div>
+        <div class="var"><dt>cur</dt><dd id="v-cur">–</dd></div>
+        <div class="var"><dt>next</dt><dd id="v-next">–</dd></div>
+        <div class="var"><dt>returnSize</dt><dd id="v-size">0</dd></div>
+      </dl>
+      <p class="label">Result</p>
+      <div class="out" id="out"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const PRESETS = [
+    { name: "LeetCode example 1", nums: [0, 1, 3, 50, 75], lower: 0, upper: 99 },
+    { name: "Gaps at both ends", nums: [3, 4, 8], lower: 0, upper: 11 },
+    { name: "Empty nums", nums: [], lower: 1, upper: 6 },
+    { name: "LeetCode example 2", nums: [-1], lower: -1, upper: -1 },
+    { name: "No gaps", nums: [4, 5, 6, 7], lower: 4, upper: 7 },
+    { name: "Large range", nums: [2, 1000, 50000], lower: 0, upper: 1000000 },
+  ];
+  const GRID_LIMIT = 120;
+
+  const CODE = [
+    "long long next = lower;",
+    "for (int i = 0; i <= numsSize; i++) {",
+    "    long long cur = (i < numsSize) ? nums[i] : (long long)upper + 1;",
+    "    if (cur > next) {",
+    "        addRange(next, cur - 1);   /* [next, cur-1] is missing */",
+    "    }",
+    "    next = cur + 1;",
+    "}",
+    "return result;",
+  ];
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    form: $("form"), preset: $("preset"), nums: $("in-nums"), lower: $("in-lower"), upper: $("in-upper"), err: $("err"),
+    viz: $("viz"), modeNote: $("mode-note"), arr: $("arr"), narr: $("narr"), code: $("code"),
+    prev: $("b-prev"), next: $("b-next"), play: $("b-play"), reset: $("b-reset"), scrub: $("scrub"), count: $("count"), speed: $("speed"),
+    vi: $("v-i"), vcur: $("v-cur"), vnext: $("v-next"), vsize: $("v-size"), out: $("out"),
+  };
+
+  el.code.innerHTML = CODE.map((t, k) =>
+    `<span class="ln" data-l="${k}"><span class="no">${k + 1}</span>${esc(t)}</span>`).join("");
+  PRESETS.forEach((p, k) => el.preset.add(new Option(p.name, String(k))));
+  el.preset.add(new Option("Custom", "custom"));
+
+  let input = null, steps = [], pos = 0, timer = null, numsSet = new Set();
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+  const rng = (a, b) => (a === b ? `${a}` : `${a}..${b}`);
+
+  function trace(nums, lower, upper) {
+    const out = [], ranges = [], n = nums.length;
+    let next = lower;
+    const push = (o) => out.push({ ranges: ranges.map((r) => r.slice()), i: null, cur: null, next, gap: null, added: false, ...o });
+    push({ line: 0, note: `Start with <code>next = lower = ${lower}</code>. No number is accounted for yet.` });
+    for (let i = 0; i <= n; i++) {
+      const sentinel = i === n;
+      push({ line: 1, i, note: sentinel
+        ? `<code>i = ${n}</code> equals numsSize. There are no more elements, so use the sentinel <code>upper + 1</code>.`
+        : `<code>i = ${i}</code>: look at <code>nums[${i}]</code>.` });
+      const cur = sentinel ? upper + 1 : nums[i];
+      push({ line: 2, i, cur, note: sentinel
+        ? `<code>cur = upper + 1 = ${cur}</code>. This catches any gap after the last element.`
+        : `<code>cur = nums[${i}] = ${cur}</code>.` });
+      if (cur > next) {
+        push({ line: 3, i, cur, gap: [next, cur - 1],
+          note: `<code>cur (${cur}) &gt; next (${next})</code>, so ${rng(next, cur - 1)} ${next === cur - 1 ? "is" : "are"} missing.` });
+        ranges.push([next, cur - 1]);
+        push({ line: 4, i, cur, added: true, note: `Add <code>[${next}, ${cur - 1}]</code> to the result.` });
+      } else {
+        push({ line: 3, i, cur, note: `<code>cur (${cur}) == next (${next})</code>. No gap before this number.` });
+      }
+      next = cur + 1;
+      push({ line: 6, i, cur, note: `<code>next = cur + 1 = ${next}</code>. Everything below ${next} is now accounted for.` });
+    }
+    push({ line: 1, i: n + 1, note: `<code>i = ${n + 1} &gt; numsSize</code>, so the loop ends.` });
+    push({ line: 8, done: true, note: ranges.length
+      ? `Done: ${ranges.length} missing range${ranges.length > 1 ? "s" : ""}, found in one pass.`
+      : `Done: nothing is missing, so the result is <code>[]</code>.` });
+    return out;
+  }
+
+  function parse() {
+    const intRe = /^-?\d+$/;
+    const toks = el.nums.value.replace(/[\[\]]/g, "").split(/[\s,]+/).filter(Boolean);
+    if (toks.some((t) => !intRe.test(t))) return "nums must be whole numbers separated by commas.";
+    const lo = el.lower.value.trim(), hi = el.upper.value.trim();
+    if (!intRe.test(lo) || !intRe.test(hi)) return "lower and upper must be whole numbers.";
+    const nums = toks.map(Number), lower = Number(lo), upper = Number(hi);
+    const LIM = 1e9;
+    if ([lower, upper, ...nums].some((v) => Math.abs(v) > LIM)) return "Keep values between -1000000000 and 1000000000 (the problem's limits).";
+    if (lower > upper) return "lower must be less than or equal to upper.";
+    if (nums.length > 30) return "Use at most 30 numbers so the animation stays readable.";
+    for (let k = 0; k < nums.length; k++) {
+      if (nums[k] < lower || nums[k] > upper) return `nums[${k}] = ${nums[k]} is outside [${lower}, ${upper}].`;
+      if (k && nums[k] <= nums[k - 1]) return "nums must be sorted in increasing order with no duplicates.";
+    }
+    return { nums, lower, upper };
+  }
+
+  function load(inp) {
+    stop();
+    input = inp;
+    numsSet = new Set(inp.nums);
+    steps = trace(inp.nums, inp.lower, inp.upper);
+    pos = 0;
+    el.scrub.max = String(steps.length - 1);
+    buildStatic();
+    render(true);
+  }
+
+  function fillForm(p) {
+    el.nums.value = p.nums.join(", ");
+    el.lower.value = String(p.lower);
+    el.upper.value = String(p.upper);
+  }
+
+  const gridMode = () => input.upper - input.lower + 1 <= GRID_LIMIT;
+
+  function buildStatic() {
+    const { nums, lower, upper } = input;
+    if (gridMode()) {
+      let h = '<div class="line-grid">';
+      for (let v = lower; v <= upper; v++) h += `<div class="cell" data-v="${v}">${v}</div>`;
+      h += `<div class="cell sentinel" data-v="${upper + 1}" title="sentinel upper + 1">${upper + 1}</div></div>`;
+      el.viz.innerHTML = h;
+      el.modeNote.textContent = `Each square is one integer. The dashed square is the sentinel upper + 1 = ${upper + 1}.`;
+    } else {
+      let h = '<div class="seg-row">', prev = lower;
+      for (const x of nums) {
+        if (x > prev) h += `<div class="seg gap" data-a="${prev}" data-b="${x - 1}">${rng(prev, x - 1)}</div>`;
+        h += `<div class="seg node" data-v="${x}">${x}</div>`;
+        prev = x + 1;
+      }
+      if (prev <= upper) h += `<div class="seg gap" data-a="${prev}" data-b="${upper}">${rng(prev, upper)}</div>`;
+      h += `<div class="seg node sentinel" data-v="${upper + 1}">${upper + 1}</div></div>`;
+      el.viz.innerHTML = h;
+      el.modeNote.textContent = `The range has ${(upper - lower + 1).toLocaleString()} numbers, so runs of numbers not in nums are drawn as one block each.`;
+    }
+    let a = "";
+    nums.forEach((x, k) => { a += `<div class="slot" data-i="${k}"><div class="box">${x}</div><span class="idx">[${k}]</span></div>`; });
+    a += `<div class="slot sentinel" data-i="${nums.length}"><div class="box">${upper + 1}</div><span class="idx">upper+1</span></div>`;
+    el.arr.innerHTML = a;
+  }
+
+  const inRanges = (v, rs) => rs.some(([a, b]) => v >= a && v <= b);
+
+  function render(first) {
+    const s = steps[pos], prevS = steps[pos - 1];
+    const last = s.ranges[s.ranges.length - 1];
+
+    if (gridMode()) {
+      el.viz.querySelectorAll(".cell").forEach((c) => {
+        const v = Number(c.dataset.v), sentinel = c.classList.contains("sentinel");
+        c.className = "cell" + (sentinel ? " sentinel" : "");
+        if (!sentinel) {
+          if (numsSet.has(v)) c.classList.add("present");
+          else if (inRanges(v, s.ranges)) c.classList.add("missing");
+          else if (s.gap && v >= s.gap[0] && v <= s.gap[1]) c.classList.add("cand");
+          if (s.added && last && v >= last[0] && v <= last[1]) c.classList.add("flash");
+        }
+        if (s.cur !== null && v === s.cur) c.classList.add("is-cur");
+        if (!s.done && v === s.next) c.classList.add("is-next");
+      });
+    } else {
+      el.viz.querySelectorAll(".seg").forEach((g) => {
+        const base = g.classList.contains("gap") ? "seg gap" : "seg node" + (g.classList.contains("sentinel") ? " sentinel" : "");
+        g.className = base;
+        if (g.dataset.a !== undefined) {
+          const a = Number(g.dataset.a), b = Number(g.dataset.b);
+          if (s.ranges.some((r) => r[0] === a && r[1] === b)) g.classList.add("missing");
+          else if (s.gap && s.gap[0] === a && s.gap[1] === b) g.classList.add("cand");
+          if (!s.done && a === s.next) g.classList.add("is-next");
+        } else {
+          const v = Number(g.dataset.v);
+          if (s.cur !== null && v === s.cur) g.classList.add("is-cur");
+          if (!s.done && v === s.next) g.classList.add("is-next");
+        }
+      });
+    }
+
+    el.arr.querySelectorAll(".slot").forEach((sl) => sl.classList.toggle("on", s.i !== null && Number(sl.dataset.i) === s.i));
+    el.code.querySelectorAll(".ln").forEach((ln) => ln.classList.toggle("hl", Number(ln.dataset.l) === s.line));
+
+    setVar(el.vi, s.i === null ? "–" : s.i, prevS && prevS.i);
+    setVar(el.vcur, s.cur === null ? "–" : s.cur, prevS && prevS.cur);
+    setVar(el.vnext, s.next, prevS && prevS.next);
+    setVar(el.vsize, s.ranges.length, prevS && prevS.ranges.length);
+
+    el.out.innerHTML = s.ranges.length
+      ? s.ranges.map((r, k) => `<span class="chip${s.added && k === s.ranges.length - 1 ? " new" : ""}">[${r[0]},${r[1]}]</span>`).join("")
+      : '<span class="empty">[] — no ranges yet</span>';
+
+    el.narr.innerHTML = s.note;
+    el.scrub.value = String(pos);
+    el.count.textContent = `${pos + 1}/${steps.length}`;
+    el.prev.disabled = pos === 0;
+    el.reset.disabled = pos === 0;
+    el.next.disabled = pos === steps.length - 1;
+    if (first) el.vi.classList.remove("changed");
+  }
+
+  function setVar(node, val, prevVal) {
+    node.textContent = String(val);
+    node.classList.toggle("changed", prevVal !== undefined && prevVal !== null && String(prevVal) !== String(val) && val !== "–");
+  }
+
+  function go(k) { pos = Math.max(0, Math.min(steps.length - 1, k)); render(); }
+  function delay() { return 950 / Number(el.speed.value); }
+  function tick() {
+    if (pos >= steps.length - 1) { stop(); return; }
+    go(pos + 1);
+    timer = setTimeout(tick, delay());
+  }
+  function play() {
+    if (pos >= steps.length - 1) go(0);
+    el.play.textContent = "Pause";
+    timer = setTimeout(tick, delay() * 0.5);
+  }
+  function stop() { clearTimeout(timer); timer = null; el.play.textContent = "Play"; }
+
+  el.play.addEventListener("click", () => (timer ? stop() : play()));
+  el.next.addEventListener("click", () => { stop(); go(pos + 1); });
+  el.prev.addEventListener("click", () => { stop(); go(pos - 1); });
+  el.reset.addEventListener("click", () => { stop(); go(0); });
+  el.scrub.addEventListener("input", () => { stop(); go(Number(el.scrub.value)); });
+
+  el.preset.addEventListener("change", () => {
+    if (el.preset.value === "custom") { el.nums.focus(); return; }
+    const p = PRESETS[Number(el.preset.value)];
+    fillForm(p); el.err.textContent = ""; load(p);
+  });
+  [el.nums, el.lower, el.upper].forEach((i) => i.addEventListener("input", () => { el.preset.value = "custom"; }));
+  el.form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const r = parse();
+    if (typeof r === "string") { el.err.textContent = r; return; }
+    el.err.textContent = "";
+    load(r);
+    play();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest("input, select, textarea")) return;
+    if (e.key === "ArrowRight") { stop(); go(pos + 1); e.preventDefault(); }
+    else if (e.key === "ArrowLeft") { stop(); go(pos - 1); e.preventDefault(); }
+    else if (e.key === " " && !e.target.closest("button")) { timer ? stop() : play(); e.preventDefault(); }
+    else if (e.key === "Home") { stop(); go(0); }
+  });
+
+  fillForm(PRESETS[0]);
+  load(PRESETS[0]);
+  go(3); /* open on a moment that shows the pointers in use */
+})();
+</script>
