@@ -16,7 +16,7 @@ Concise notes with runnable examples, following the
 | 07 | [File Handling](07-file-handling.md) — fopen modes, text and binary I/O, structs, EOF/feof, fseek, remove/rename | ✅ |
 | 08 | [Error Handling](08-error-handling.md) — errno/perror, goto cleanup, file errors, divide by zero, assert, setjmp | ✅ |
 | 09 | [Preprocessor and Misc](09-preprocessor-and-misc.md) — directives, macros, header files, time.h, linkage, storage classes | ✅ |
-| 10 | Advanced — variadic, syscalls, signals, sockets, `_Generic`, threads | ⏳ |
+| 10 | [Advanced Concepts](10-advanced-concepts.md) — variadic functions, syscalls, signals, sockets, `_Generic`, pthreads | ✅ |
 | 11 | What's Next — interview Qs, DSA, practice | ⏳ |
 
 ## Running the examples
@@ -33,3 +33,5 @@ See [PLAN.md](PLAN.md) for the full outline.
 > `02_nested.c` uses a GCC-only extension: compile it with `-std=gnu11` instead of `-std=c11`.
 
 > `09_multifile/` is a multi-file program: build it with `cd examples/09_multifile && gcc -Wall -Wextra -std=c11 main.c mathutil.c -o app`.
+
+> `10_threads.c` needs `-pthread`. For the socket demo, run `./server` in one terminal and `./client "hi"` in another.
